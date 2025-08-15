@@ -1,0 +1,891 @@
+//defining 
+
+#include <stdint.h>
+#include <stdlib.h>  
+#include <stdio.h>   
+
+//color defined 
+#define Lpink 0xFC9F
+#define Dpink  0xC013
+
+//from prev lab 
+	//defning screen 
+#define for_collumnschar 80
+#define for_rowschar 60
+
+#define screendisp_width 320
+#define screendisp_h 240
+
+
+	
+//see again
+	//defining the road 
+#define road_size (+whitborder4white+left_border+big_blck_box+left_roadW+right_road_w)
+#define blck_SCREEN_X_START (road_size) 
+
+//BREAKTHIS UPPP
+#define leftRoad (left_border)
+#define rightRoad (leftRoad+left_roadW+right_road_w-1) 
+
+//colors 
+	
+#define Lblue 0xAEDF
+#define blck 0x0000
+#define white 0xFFFF
+#define color4road blck  
+//defining game contsnatts
+	
+//play around wiht show the TA 
+
+	#define start_speed 9 //toggle this
+	//is it the result?
+	#define maxPosSpeed 10
+	//max speed for car 
+	#define startTick   60000
+	#define percentIncrease 5
+	//% speed increase
+	//prof said has to be noticeable 
+	#define distance4spawn  96
+	//make sure consistent 
+
+unsigned int seed=12345;
+//given in starter code 
+
+//shifitng from lanes
+int player_lane=0;
+
+
+//keeps going if 1 stopr if zero 
+int game_running=0;
+
+
+
+//see if can be global variables
+int score=0;
+int current_speed=start_speed; //see if specified in lab 
+// is it moving too slow 
+
+typedef struct{
+    int x,y;
+	
+	//defnong position of car in rght manner 
+    int active;}
+TrafficCar;
+
+TrafficCar cars[3];
+//can have max three cars on screen at one time 
+//see the vairations 
+int speed_counter=0;//ARM COUNTER SEE AGAIN AND ASK 
+
+int tick_threshold=startTick;
+
+#define char4mem ((volatile char*)0xC9000000)
+//defining char buffer address
+	
+	
+	
+#define ps2_kbreg4DATA (*(volatile int*)0xFF200100)
+	
+	//ps2 kb DATA REG
+	
+#define PIXEL ((volatile short *)0xC8000000)//pixel biffer address 
+#define whitborder4white 10   //width of border 
+
+///////////////////////// STARTER CODE 
+	
+	//DONTTT CHANGE 
+
+// Function to generate a pseudo-random number
+unsigned int pseudo_random() {
+    // LCG parameters (from Numerical Recipes)
+    seed = (1103515245 * seed + 12345) & 0x7fffffff;
+    return seed;
+}
+
+// Function to get a pseudo-random number within a specific range [min, max]
+unsigned int random_in_range(int min, int max) {
+    return (pseudo_random() % (max - min + 1)) + min;
+}
+//////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+//car sizes defined 
+#define carWidth 30
+#define carHeight 48
+#define gamer (screendisp_h-carHeight)
+	//PLAYERS ACR MUST STAY 
+
+	
+	
+//messeir
+// === LAYOUT DIMENSIONS ===
+#define right_road_w 31   //right lane
+#define left_border 10   //LEFT WHITE BORDER 
+#define big_blck_box 0   //have???
+	
+	
+	
+#define left_roadW 50  //left width 
+//make sure addes up accordingly 
+	
+//DRAWUNG CAR
+	
+//CAN IT JUSTBE A SQAUIRE?
+void draw_car(int cx,int cy,short color) {
+    int y=0;
+    while(y<carHeight){
+        int x=0;
+        while(x<carWidth){
+			
+			
+           int half=carWidth / 2;
+			//cnetering the car 
+            int drawX=cx-half+x;
+           int drawY= cy+y;
+			
+			
+            short carBody=color;
+            VGA_draw_point(drawX,drawY,carBody);
+			//drawin the car w pixel 
+            x=x+1;}
+		
+		
+		
+        y=y+1;}
+	//defining the wheels 
+	
+	
+	//see if even working 
+    int colorCheck=color;
+    if (colorCheck==Dpink) {
+        int leftWheelX=cx-(carWidth/2);
+		
+		
+		
+		
+        int rightWheelX=cx+(carWidth/2)-3;
+        int wheelTopY=cy+5;
+		///GET RID OFF IF NOT WOPRKING 
+        int wheelBottomY=cy+carHeight-8;
+//DOESSSS THIS WORKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK
+		
+		
+		//IGNORE IFNTO 
+        int wheelY1=0;
+        while (wheelY1<3){ //loopin through the veritcal rows of wheel pixels
+            int wheelX1=0;
+            while (wheelX1<3){ // loopin through the horizontal rows of wheel pixels
+                int lx1=leftWheelX+wheelX1;
+                int rx1=rightWheelX+wheelX1;
+                	int ty1=wheelTopY+wheelY1;
+				
+				
+				
+                int by1=wheelBottomY+wheelY1;
+
+                short wheel_clr=Lblue; //color of wheel
+                VGA_draw_point(lx1 ,ty1,wheel_clr);
+				
+				//see againnot workfing 
+                 VGA_draw_point(rx1,ty1, wheel_clr);
+                 VGA_draw_point(lx1,by1,wheel_clr);
+				
+				
+				
+				
+                VGA_draw_point(rx1 ,by1 ,wheel_clr);
+                 wheelX1=wheelX1 +1;}
+				 //move to next wheel rwo
+           wheelY1=wheelY1 +1; }}} 
+			
+//done like task 1 
+void VGA_clear_pixelbuff (){
+    int vertical= 0;
+    while(vertical < screendisp_h) {
+        int horizontal =0;
+        // go through every pixel horizontally in each row
+        while(horizontal <screendisp_width){
+            if(horizontal<blck_SCREEN_X_START){
+				
+				
+                // blck road zone
+                VGA_draw_point(horizontal,vertical,blck);}
+			else{
+				
+                VGA_draw_point(horizontal,vertical,blck );}
+			
+			
+            horizontal=horizontal+1;}
+        vertical=vertical+1;}}
+
+
+
+
+
+//messierrr
+
+
+
+//////////like task 1 
+void VGA_write_char(int x,int y,char c){
+    // bounds check because bad things happen otherwise
+    if(!(x>=0))
+		return;
+    if(x>for_collumnschar-1)
+		return;
+    if(!(y>=0))
+		
+		
+		
+		
+		return;
+    if(y>for_rowschar-1)
+		 return;
+
+    // calculating where the character should go (math I copied from slides)
+    int row_offset= y << 7; 
+    int final_offset= row_offset +x;
+
+    // dereference and write the character (no idea how this works, it just does)
+    char*write_here=( char*)char4mem;
+    write_here [final_offset]=c;
+}
+
+//,messier 
+//delete car
+void erase_car (int cx,int cy){
+    int y1=0; //from the top
+    while(y1 < carHeight ){
+        int x1= 0;
+        while(x1 <carWidth ){
+            int half_car =carWidth/2; //geting center value of car
+            int startX=cx-half_car;
+			
+			
+          int drawX= startX +x1; //drawing sarts
+            int drawY= cy+y1;
+			
+			
+			
+			
+			
+           short roadblck=color4road;
+           VGA_draw_point (drawX,drawY,roadblck); //draw road color
+            x1 = x1+1; //to go sieways
+        }
+        y1=y1+1; }} // to go dow vertically
+
+//function to draw roadddddddddd
+
+//ask TA
+void draw_road(){
+    int y_pos=0;//makes sure start from top of the screen 
+    while(y_pos<screendisp_h){
+		//drawing the borders which i wan tot be the blue strip 
+       int x_left_border =0;
+		
+        while(x_left_border <left_border){
+           int leftedgeColor=Lblue;
+			//where we get the refrencesf from??
+			
+			
+			
+			
+          VGA_draw_point (x_left_border,y_pos,leftedgeColor);
+			//draw pixel 
+          x_left_border= x_left_border+1;
+			//mov right
+        }
+       int left_start =left_border;//start excalty where border ends
+		
+		
+        int left_end =left_border+left_roadW;
+		
+		//chamged aroud code make sure commebts align 
+        int x_left_lane =left_start;
+       while(x_left_lane< left_end){
+		   
+		   
+           short lane_color1 =color4road;
+           VGA_draw_point( x_left_lane,y_pos, lane_color1);
+		   //drawing road piixel 
+           x_left_lane = x_left_lane+1; }//move right the right way
+
+		
+		//make sure dimentions are rightttt
+        int right_start= left_border+left_roadW ;
+		/////this is for drawing right lane
+        
+		
+		
+		//ends of left lane 
+		int right_end =right_start+right_road_w;
+       int x_right_lane=right_start;
+		
+		
+        	while(x_right_lane <right_end){
+            		short lane_color2 =color4road;//balck for the road
+				//is it okay if both are black?
+            	VGA_draw_point(x_right_lane,y_pos, lane_color2);
+				//road pixel drawing 
+				
+				//this is to move right 
+            	x_right_lane=x_right_lane +1 ;
+        }
+		
+
+
+        	int white_start=rightRoad+1; 
+		
+		
+        	int white_end=white_start+whitborder4white; //end of right bblue border
+        int x_white_border=white_start;
+        while(x_white_border<white_end){
+			
+			
+			
+			
+          short color4border=Lblue; //right border cololr
+         VGA_draw_point(x_white_border,y_pos,color4border); //draw right border
+            x_white_border=x_white_border+1;}
+        y_pos=y_pos+1; }} //go to next row
+
+//check if new data came in
+int read_PS2_data(char*data){
+    volatile int*kbrd_ptr=(volatile int*)0xFF200100;
+	//take keyboard input
+	int rawInput=*kbrd_ptr;
+	
+	
+		
+    	int freshnessFlag=rawInput>>15;
+		//check if its a different key that is inpuitted
+    int isItNew=freshnessFlag&1;
+
+	
+	
+	
+	
+	
+    if(isItNew==1){ // if the data new came in then return sucecs else return 0 which means not sucess
+	// get the keypressed
+        int neededByte=rawInput&0x000000FF;
+		//store the key in the variable
+        *data=(char)neededByte;
+		// if the key pressed was a different key it would return 1 otherwise 0
+        return 1;
+    }
+
+    return 0;
+}
+
+//initializes games so at start of game or wben game over
+void init_game(){
+	//reset the graphics
+     VGA_clear_pixelbuff();
+	 //reset the txt 
+    VGA_clear_charbuff();
+		//draw new road
+    	draw_road();
+		
+		//starting lane
+    	int lane=0;
+    	player_lane=lane;
+		//initial socre
+    	int start_score_val=0;
+    score=start_score_val;
+	//indicate game ahs started an d is runingm
+    game_running=1;
+	
+	//cars starting speed
+    int starting_speed_val=start_speed;
+     current_speed=starting_speed_val;
+
+			//timer to wait for each update
+    		int tick_initialize=startTick;
+    tick_threshold=tick_initialize;
+
+    int i=0;
+    while(i<3){
+		
+		
+		//inactivates cars 
+        cars[i].active=0;
+        i=i+1;
+    }
+	//draw the player in the right starting position
+    update_character_position();
+	//show the score
+    update_score_display();
+}
+
+			#define carPadding 10
+				
+				
+#define leftRoadSide (left_border+carPadding+(carWidth/2))
+#define rightRoadside (rightRoad-carPadding-(carWidth/2))
+
+//change the position of a car to handle lane change
+void update_character_position(){
+	//track players previous lane
+    static int prev_lane=-1;
+
+    int prev_x;
+	//x position based on previous lane
+    if(prev_lane==0){
+        prev_x=leftRoadSide;
+    }else{
+        prev_x=rightRoadside;
+    }
+
+    int new_x;
+	//x position based on current lane
+    if(player_lane==0){
+        new_x=leftRoadSide;
+    }else{
+        new_x=rightRoadside;
+    }
+	
+	//erase car from prev  positon
+    if(prev_lane!=-1){
+        erase_car(prev_x,gamer);
+    }
+	//draw players car
+    draw_car(new_x,gamer,Dpink); //darw car in the new lane
+	//update prev lane
+    prev_lane=player_lane;
+}
+
+//use to handle input
+void handle_input(){
+    char code=0; // store the key tht was pressed
+    int gotData=read_PS2_data(&code);
+
+    if(gotData!=0){
+	//WORKSSSSSSSSSS???
+      if(game_running==1){  //check if something new came in and game is on
+         if(code==0x74){
+		//check if player in leftr lane
+            if(player_lane==0){
+				
+				
+                 player_lane=1; //move player to right lane
+                update_character_position();} //draw car in new positon
+            }else{
+			 
+			 
+             if(code ==0x6B){
+			 //check if player in right lane
+                if( player_lane==1){
+					
+					
+				//not working here? fix it
+                player_lane =0; //move to left lan e
+               update_character_position(); }}}} //draw car in new positon
+			   
+			   //check if game over
+        if(game_running==0){
+         if(code==0x1B){
+            init_game(); //restart gmae
+		 }}}}
+		 
+//spawmn car 
+void spawn_object(){
+    int i=0;
+	//go thro all cars posible
+    while(i<3){
+        if(cars[i].active==0){
+            int j=0;
+            int can_spawn=1; //able to aspawn
+			
+			//check the other cars
+            while(j<3){
+                int activeCheck=cars[j].active; //check if car active
+                int yCheck=cars[j].y;
+				
+				
+                if(activeCheck==1){ //only look at active cars
+                    if(yCheck<distance4spawn){ //car too close to top
+                        can_spawn=0;
+                        j=3; // exit loop
+                    }
+                }
+                j=j+1; //next car
+            }
+			//spawns car
+            if(can_spawn==1){
+                cars[i].active=1; //mark car as active
+                int resetY=-carHeight;
+                cars[i].y=resetY;
+				
+				//random lane
+                int laneChoice=random_in_range(0,1);
+                if(laneChoice==0){
+                    cars[i].x=leftRoadSide; //left lane
+                }else{
+                    cars[i].x=rightRoadside; //right lane
+                }
+
+                i=3; //car spawned leavel oop
+            }else{
+                i=i+1; //try next slot
+            }
+        }else{
+            i=i+1; //car already active
+        }
+    }
+}
+
+//done
+void update_objects(){
+    int i=0;
+	// go thro all cars
+    while(i<3){
+	//update only active cars
+        if(cars[i].active==1){
+            	int carX=cars[i].x;
+            int carY=cars[i].y;
+			
+			//erase car from curr positon
+            	erase_car(carX,carY);
+			
+			//move car based on current speed
+            int tempSpeed=current_speed;
+			
+			
+            	int updatedY=carY+tempSpeed;
+            cars[i].y=updatedY;
+	
+			//if car wenmt of f screen
+            if(cars[i].y>screendisp_h){
+                cars[i].active=0; // mark it as inactive
+                	int newScore=score+1; //increment score
+                score=newScore;
+				
+				//increase speed
+                int percentAdd=100+percentIncrease;
+				
+				
+                	int multiplied=current_speed*percentAdd;
+                int new_speed=multiplied/100;
+
+				//update speed if berlow max allowed speed
+                if(new_speed<maxPosSpeed){
+                    current_speed=new_speed;
+                }
+				
+				//increase update speed
+                	int reducedTick=tick_threshold*90;
+				
+				
+				
+				
+                int result=reducedTick/100;
+                tick_threshold=result;
+
+            }else{
+				// draw car in its new oposition
+                	int cx=cars[i].x;
+				
+				
+                int cy=cars[i].y;
+                draw_car(cx,cy,Lpink);
+            }
+        }
+        i=i+1; // go to next car
+    }
+}
+
+//changes score on the screen
+void update_score_display(){
+
+	//is working?? 
+	//hold score txt
+    char score_str[12];
+    int writeResult=sprintf(score_str,"SCORE: %03d",score);
+		//starting position for txt
+    	int startX=47;
+    	int y=30;
+    int i=0;
+	
+	//draw each character on screeen
+    while(i<10){
+        char ch=score_str[i];
+		//ok draw isnt working not sure why here debug later
+        VGA_write_char(startX+i,y,ch); //draw 
+        i=i+ 1;
+    }
+}
+
+/////done like task 1 
+void VGA_clear_charbuff(){
+    // remove letter
+    int rowIndex= 0;
+	
+	//loop thro each row
+    while(rowIndex <for_rowschar){
+        int colIndex=0;
+		
+		
+        // loop char by char
+        while(colIndex< for_collumnschar){
+            char blank= 0; //
+            VGA_write_char(colIndex,rowIndex,blank); //put blank character
+            colIndex =colIndex+1 ; // go to next col
+        }
+        rowIndex=rowIndex+1 ; // go to nex row
+    }
+}
+
+//doneee
+int check_collision (){
+    int px;
+	//players x-pos b ased o nlaen
+    if(player_lane==0){
+        px=leftRoadSide; //leftg lane
+    }else{
+        px=rightRoadside; //right lane
+    }
+    int py=gamer;
+    int i=0;
+	//go thro cars
+    while(i< 3){
+		//find distance between car and player
+        if(cars [i].active==1){
+            int dx=px-cars[i].x;
+            if(dx< 0){
+                dx= dx*-1; //ensure distance is positive
+            }
+			//find vertical distance between player and car
+            int dy=py- cars[i].y;
+            if(dy<0){
+                dy=dy*-1;
+            }
+			
+			// check if cars colliding
+            if(dx<carWidth){
+				
+				
+                if(dy <carHeight){
+				//nto detecting collisions even when they occur infront of me check why later
+                    return 1; //collision happened
+                }}}
+        i=i+1; //check nextg car
+    }
+    return 0;} //no colliosn
+
+
+		///////////////////////begin from here 
+
+//formawt text on screen
+
+void text_format(int row_offset, const char*text ){
+    int len = 0;
+    while(text[len] !='\0'){ //counting till null 
+        len= len +1 ; }
+    	int startingCollumn =47;//where text drawing starts 
+	
+	
+	
+	
+    	int widthStart= 10; //width where txt should be centred
+	
+    	int startingRow=0;
+	//playing arounf w these to see what works 
+    	int heightStart=60;
+	
+    	int middle_row= heightStart/ 2;
+	
+    	int centering =( widthStart-len)/2;
+	//how mcuh space for middle
+	
+    int position_row= startingCollumn+centering;
+    int start_row= startingRow+middle_row+row_offset;
+	
+	//last row to print on 
+    int indexI= 0;
+    while(indexI<len){
+        char ch=text [indexI ]; //current char get 
+		
+		
+		
+        VGA_write_char (position_row+ indexI,start_row,ch); //write the charcater
+        
+		
+		indexI=indexI+1 ;}} //move laont to next
+
+
+//show game o ver and final score
+void show_game_over(){
+	
+	
+	
+    VGA_clear_charbuff();
+	//show game over a bit above the center
+    text_format(-2,"GAME OVER" );
+    	char score_line[32];
+    char*msg="Final Score: ";
+    int msg_len=13;
+	
+    	int s=score;
+	
+    	int a=s/100;
+	
+    	int b=(s%100)/10;
+	
+    	int c=s%10;
+	
+    int i=0;
+    while(i<msg_len){
+		
+		
+		
+        score_line[i]=msg[i];
+        i=i+1;}
+    	score_line[i++]=a+'0';
+	
+    
+	score_line[i++]=b+'0';
+	
+    	score_line[i++]=c+'0';
+	
+    	score_line[i]='\0';
+	//display final scroe msg at center
+    text_format(0,score_line);
+	//show resart game
+    text_format(2,"Press S to start");
+	
+	
+	
+    text_format(4,"Use <- and -> keys to move");
+}
+
+void VGA_draw_point(int x,int y,short c){
+//check if x and y coordiatne outside the screne
+    if(!(x>=0))
+		
+		//see if neg 
+		return;
+    if(x>screendisp_width-1)
+		return;
+    if(!(y>=0))
+		//see if neg again 
+		
+		
+		//making sure within bounds 
+		return;
+     if(y>screendisp_h-1)
+		 //reject if beyond screen bounds 
+		 
+		 
+		 return;
+	
+	// times 512
+    int yOffset=y<<9;
+     int xOffset=x;
+	
+	//indexing into buffer 
+	
+    	int whereThePixelLives=yOffset+xOffset;
+	
+    	short*placeToDraw=(short*)
+		PIXEL;
+		//store the place to draw
+	
+	//getting color to correct pos
+    placeToDraw[whereThePixelLives]=c;}
+
+
+
+
+//MAIN APPLICATION FUNCTIONS 
+int main(){
+   	 char code=0; //key from the keyboard
+   	 VGA_clear_charbuff(); //clear prev txt
+    	VGA_clear_pixelbuff(); //reset screen like the graphics
+    	draw_road(); 
+	
+	
+	
+	
+	//show instructions
+    	text_format(0,"Press S to start");
+    text_format(2,"Use <- and -> keys to move");
+    	int waitLoopFlag=1;
+	
+	
+    	while(waitLoopFlag==1){ //run when player pres 'S'
+      	int fresh=read_PS2_data(&code);
+     if(fresh==1){
+      if(code==0x1B){
+		  
+		  
+		  
+		  
+		  
+           waitLoopFlag=0;}}}
+	//player [resses s
+	
+	
+    	init_game();//when pressed game starts
+	
+	//main game so always runs 
+    while(1==1){ //run game
+      handle_input();
+		//checking for player input
+		
+		
+	//was suppose to chmage
+		//TAS only llooking at game
+		
+       speed_counter=speed_counter+1;
+		
+		// should implement arm system?
+        
+		if(speed_counter>tick_threshold){
+        speed_counter=0;
+			
+			//resets counter 
+			
+			
+          if(game_running==1){
+			  //still playing even aftre stope
+			  //keeps it updating 
+			  
+			  
+            update_objects();//keeps cars moving
+			  //and make sure score is staying up to date 
+          update_score_display();
+			  
+			  //checks if car is hit 
+              int crashOccur=check_collision();
+			  
+			  //if car is hit stops the game 
+               if(crashOccur==1){
+				   
+				   
+          game_running=0;
+				   
+				   //displays the nessary message 
+            show_game_over();
+                }else{
+				   
+				   //if not unpreductlybale add car to screen 
+                    spawn_object();}}}}
+    	int noUsed=0;
+    	return noUsed;} //return a random valeu so it works
+
+
+
+
+
+
+
+
+
