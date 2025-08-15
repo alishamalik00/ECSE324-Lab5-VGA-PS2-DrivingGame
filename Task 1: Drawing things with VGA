@@ -1,0 +1,191 @@
+#include <stdint.h>
+
+#define holds_base 0xC8000000
+
+
+#define base_for_char 0xC9000000
+
+
+
+
+// forward declaration to avoid implicit warning
+void VGA_draw_point(int x,int y,short c);
+
+
+
+#define screen_dim_wdth 320
+#define screen_dim_height 240
+	
+	
+void VGA_clear_pixelbuff() {
+    int vertical=0;
+//go thro eachr ow
+    while (vertical<screen_dim_height) {
+        int horizontal=0;
+        //clearing one pixel by one pixel
+
+        while (horizontal<screen_dim_wdth) {
+			
+			
+            VGA_draw_point(horizontal,vertical,0);
+			
+			//draw a black pixel
+            horizontal=horizontal+1; //see again 
+        }
+        vertical=vertical+1; //go next row
+    }
+}
+
+#define forColls     80
+#define forROws     60
+void VGA_draw_point(int x,int y,short c) {
+    // don't draw outside the screen or it will  die
+    if (!(x>=0))
+		return;
+	
+	
+	//again is it too redundant?
+    if (x>screen_dim_wdth-1) 
+		return;
+    if (!(y>=0)) 
+		return;
+	
+	
+	
+    if (y>screen_dim_height-1) 
+		return;
+
+    // figure out PIXELADDRESS to put the pixel... I think this is right
+    int offsetY=y<<10;
+	
+	
+	
+    int offeset4x=x<<1;
+    int PIXELADDRESS=holds_base+offsetY+offeset4x;
+
+    //see again
+    short* pixelPointer=0;
+    pixelPointer=(short*)PIXELADDRESS;
+	
+	
+	
+	
+    *((volatile short*)pixelPointer)=c;//ast TA for 
+}
+
+void VGA_write_char(int x,int y,char c) {
+    //same thing as above making sire writing in screen grid
+
+//ok debug this function not sure why its not workijng properly
+    if (!(x>=0)) 
+		return;
+	
+	
+	//mayabe too redudant???
+    if (x>forColls-1) 
+		return;
+	
+	
+    if (!(y>=0)) 
+		return;
+    if (y>forROws-1) 
+		return;
+
+    //calculate memory loc
+    int rowoffset=y<<7; // 2^7 = 128 i think?
+	
+    int PIXELADDRESSCharGoes=base_for_char+rowoffset+x;
+
+    //creating memory pointer then casting addres tio a char poitner
+    char* characterPOinter=0;
+	
+	
+	
+    characterPOinter=(char*)PIXELADDRESSCharGoes;
+	
+	//see how thsi work s
+//store to tht spot in memory
+    *((volatile char*)characterPOinter)=c;
+}
+
+void VGA_clear_charbuff(){
+    //go thro each row
+    int rowCount=0;
+	//for loop or while 
+	
+	
+    while (rowCount<forROws) {
+		
+        int COLCount=0;
+        //clearing one row at a time cause this thing won't do it itself
+        do{
+			
+			
+			//make sure not to change starter 
+			
+			
+            char blank_char=0;
+//write charcter
+            VGA_write_char(COLCount,rowCount,blank_char);
+//go to next col
+			
+			
+            COLCount = COLCount+1; //chnage to ++
+        } while(COLCount<forColls);
+
+//go to next row
+        rowCount=rowCount+1; //can make more efficient 
+    }
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	/////////////the rest is starter 
+}
+void draw_test_screen() {
+    VGA_clear_pixelbuff();
+    VGA_clear_charbuff();
+
+    int screenH = 240;
+    int screenW = 320;
+
+    for (int y = 0; y < screenH; y++) {
+        for (int x = 0; x < screenW; x++) {
+            // Calculate color components to create a smooth gradient
+            unsigned int red = (x * 31 / screenW) << 11;      // Horizontal red gradient
+            unsigned int green = (y * 63 / screenH) << 5;     // Vertical green gradient
+            unsigned int blue = ((x + y) * 31 / (screenW + screenH));  // Diagonal blue gradient
+
+            // Combine red, green, and blue into a 16-bit color
+            unsigned int color = red | green | blue;
+
+            // Draw the pixel at (x, y) with the calculated color
+            VGA_draw_point(x, y, color);
+        }
+    }
+
+    const char *message = "Hello World!";
+    int x = 20;
+    int y = 5;
+
+    for (int i = 0; message[i] != '\0'; i++) {
+        VGA_write_char(x++, y, message[i]);
+    }
+}
+
+int main() {
+    draw_test_screen();
+    return 0;
+}
+
+
+
+
+
