@@ -1,0 +1,233 @@
+#include <stdint.h>
+	
+#define screen_dim_wdth 320
+#define screen_dim_height 240
+
+	
+#define holds_base 0xC8000000
+
+
+#define base_for_char 0xC9000000
+
+
+#define forColls 80
+#define forROws 60
+
+
+
+#define PS2_DATA_REGISTER (*(volatile int *)0xFF200100)
+
+void VGA_write_char(int x,int y,char c) {
+    //same thing as above making sire writing in screen grid
+
+//ok debug this function not sure why its not workijng properly
+    if (!(x>=0)) 
+		return;
+	
+	
+	//mayabe too redudant???
+    if (x>forColls-1) 
+		return;
+    if (!(y>=0)) 
+		return;
+    if (y>forROws-1) 
+		return;
+
+    //calculate memory loc
+    int rowoffset=y<<7; // 2^7 = 128 i think?
+    int PIXELADDRESSCharGoes=base_for_char+rowoffset+x;
+
+    //creating memory pointer then casting addres tio a char poitner
+    char* characterPOinter=0;
+	
+	
+	
+    characterPOinter=(char*)PIXELADDRESSCharGoes;
+	
+	//see how thsi work s
+//store to tht spot in memory
+    *((volatile char*)characterPOinter)=c;
+}
+void VGA_clear_pixelbuff() {
+    int vertical=0;
+//go thro eachr ow
+    while (vertical<screen_dim_height) {
+        int horizontal=0;
+        //clearing one pixel by one pixel
+
+        while (horizontal<screen_dim_wdth) {
+			
+			
+            VGA_draw_point(horizontal,vertical,0);
+			
+			//draw a black pixel
+            horizontal=horizontal+1; //see again 
+        }
+        vertical=vertical+1; //go next row
+    }
+}
+
+
+
+void VGA_draw_point(int x,int y,short c) {
+    // don't draw outside the screen or it will  die
+    if (!(x>=0))
+		return;
+	
+	
+	//again is it too redundant?
+    if (x>screen_dim_wdth-1) 
+		return;
+    if (!(y>=0)) 
+		return;
+	
+	
+	
+    if (y>screen_dim_height-1) 
+		return;
+
+    // figure out PIXELADDRESS to put the pixel... I think this is right
+    int offsetY=y<<10;
+	
+	
+	
+    int offeset4x=x<<1;
+    int PIXELADDRESS=holds_base+offsetY+offeset4x;
+
+    // no idea why this works but it does
+    short* pixelPointer=0;
+    pixelPointer=(short*)PIXELADDRESS;
+	
+	
+	
+	
+    *((volatile short*)pixelPointer)=c;//ast TA for 
+}
+void VGA_clear_charbuff(){
+    //go thro each row
+    int rowCount=0;
+	//for loop or while 
+    while (rowCount<forROws) {
+        int COLCount=0;
+        //clearing one row at a time cause this thing won't do it itself
+        do{
+			
+			
+			//make sure not to change starter 
+			
+			
+            char blank_char=0;
+//write charcter
+            VGA_write_char(COLCount,rowCount,blank_char);
+//go to next col
+			
+			
+            COLCount = COLCount+1; //chnage to ++
+        } while(COLCount<forColls);
+
+//go to next row
+        rowCount=rowCount+1; //can make more efficient 
+    }
+	
+	
+}
+	
+	
+//eveythng else is the same from prev lab
+	
+//DONE
+int read_PS2_data(char *data) {
+    //ggeting addy from data reg 
+    volatile int *dataRegPointer=(volatile int *)0xFF200100;
+	//learn to use pointers
+	
+	///make sure correct 
+	//reading 32 bit val
+    int rawInput=*dataRegPointer;
+
+    //seeing if data is in fact new 
+	//by the 15th bit 
+	
+    int checker=rawInput>>15;
+	
+	
+	
+	//shift right o get new bit 
+    int newData=checker&0x01;
+	
+	//see if correct way 
+
+    //found ata or no
+    if (newData==1){
+		
+		//getting lowest byte 
+        int keyCode=rawInput &0x000000FF;
+		
+		//this is the key code MAKE SURE
+        
+		*data=(char)keyCode;
+		//store in called location 
+
+		//so daata was found 
+        int sucess_found=1;
+		
+        return sucess_found;}
+
+    //failure cae 
+    int not_found=0;
+	
+    return not_found;
+	//could not be found 
+}
+
+
+
+void write_hex_digit(unsigned int x,unsigned int y, char c) {
+    if (c > 9) {
+        c += 55;
+    } else {
+        c += 48;
+    }
+    c &= 255;
+    VGA_write_char(x,y,c);
+}
+void write_byte_kbrd(unsigned int x,unsigned int y, unsigned int c) {
+   char lower=c>>4 &0x0F;
+   write_hex_digit(x,y,lower);
+   char upper=c&0x0F;
+   write_hex_digit(x+1,y,upper);
+   return;
+}
+
+void input_loop_fun() {
+    unsigned int x = 0;
+    unsigned int y = 0;
+	VGA_clear_pixelbuff();
+    VGA_clear_charbuff();
+
+    while (y<=59) {
+    
+			char data;
+            char r2 = read_PS2_data(&data);
+
+            if (r2 != 0) {  // Check if data is available
+
+				write_byte_kbrd(x,y,data); 
+                x += 3;
+                if (x > 79) {
+                    y++;
+                    x = 0;
+                }
+
+                if (y > 59) {  // Check if loop should exit
+                    return;  // End of input loop
+                }
+            }
+    }
+}
+
+
+int main() {
+	input_loop_fun();
+	return 0;
+}
